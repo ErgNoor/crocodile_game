@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
+from config import BOT_TOKEN
 
 # Включаем логирование
 logging.basicConfig(
@@ -85,7 +86,7 @@ async def send_phrase(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 def main() -> None:
     """Запуск бота."""
     # Замените 'YOUR_TOKEN' на токен, который вы получили от @BotFather
-    application = Application.builder().token("YOUR_TOKEN").build()
+    application = Application.builder().token(BOT_TOKEN).build()
 
     # Регистрируем обработчики команд
     application.add_handler(CommandHandler("card", send_card))
