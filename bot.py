@@ -1,11 +1,12 @@
-import json
+# bot.py
 import logging
-from random import choice
-from dataclasses import dataclass
-from pathlib import Path
-from telegram import Update
-from telegram.ext import Application, CommandHandler, ContextTypes
-from config import BOT_TOKEN
+from config import BOT_TOKEN, CARDS_FILE_PATH
+from cards import CardManager
+# Убираем импорт card_manager из handlers
+from handlers import send_card, send_word, send_movie, send_phrase, send_start, send_help
+
+# Инициализируем card_manager ТОЛЬКО в bot.py
+card_manager = CardManager(CARDS_FILE_PATH)
 
 # Включаем логирование
 logging.basicConfig(
@@ -14,101 +15,14 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Определяем dataclass для карточки
-@dataclass
-class CrocodileCard:
-    word: str
-    movie: str
-    phrase: str
-
-# Путь к файлу с карточками
-CARDS_FILE_PATH = Path("cards.json")
-
-def load_cards_from_json(file_path: Path) -> list[CrocodileCard]:
-    """Загружает карточки из JSON-файла."""
-    try:
-        with file_path.open('r', encoding='utf-8') as f:
-            data = json.load(f)
-        # Преобразуем словари из JSON в экземпляры dataclass
-        cards = [CrocodileCard(**item) for item in data]
-        logger.info(f"Загружено {len(cards)} карточек из {file_path}")
-        return cards
-    except FileNotFoundError:
-        logger.error(f"Файл {file_path} не найден.")
-        return []
-    except json.JSONDecodeError as e:
-        logger.error(f"Ошибка чтения JSON из {file_path}: {e}")
-        return []
-    except TypeError as e:
-        logger.error(f"Ошибка структуры данных в {file_path}: {e}")
-        return []
-
-# Загружаем карточки при запуске скрипта
-CARDS = load_cards_from_json(CARDS_FILE_PATH)
-
-async def send_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Отправляет приветственное сообщение при команде /start."""
-    welcome_message = (
-        "Привет! 👋\n"
-        "Я бот для игры в Крокодила 🦎\n\n"
-        "Используй команды ниже, чтобы получить карточку или её часть."
-    )
-    await update.message.reply_text(welcome_message)
-
-async def send_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Отправляет сообщение с описанием команд при команде /help."""
-    help_text = (
-        "📖 Справка по командам:\n\n"
-        "/start - Приветственное сообщение\n"
-        "/help - Это сообщение\n"
-        "/card - Получить полную карточку (слово, фильм, фраза)\n"
-        "/word - Получить только слово/фразу\n"
-        "/movie - Получить только название фильма/сериала\n"
-        "/phrase - Получить только алогичную фразу"
-    )
-    await update.message.reply_text(help_text)
-
-async def send_card(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Отправляет полную карточку."""
-    if not CARDS:
-        await update.message.reply_text("Карточки не загружены или файл пуст.")
-        return
-
-    card = choice(CARDS)
-    message = f"1) {card.word}\n2) {card.movie}\n3) {card.phrase}"
-    await update.message.reply_text(message)
-
-async def send_word(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Отправляет только слово/фразу."""
-    if not CARDS:
-        await update.message.reply_text("Карточки не загружены или файл пуст.")
-        return
-
-    card = choice(CARDS)
-    await update.message.reply_text(f"{card.word}")
-
-async def send_movie(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Отправляет только фильм/сериал."""
-    if not CARDS:
-        await update.message.reply_text("Карточки не загружены или файл пуст.")
-        return
-
-    card = choice(CARDS)
-    await update.message.reply_text(f"{card.movie}")
-
-async def send_phrase(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Отправляет только алогичную фразу."""
-    if not CARDS:
-        await update.message.reply_text("Карточки не загружены или файл пуст.")
-        return
-
-    card = choice(CARDS)
-    await update.message.reply_text(f"{card.phrase}")
+from telegram.ext import Application, CommandHandler, ContextTypes
 
 def main() -> None:
     """Запуск бота."""
-    # Замените 'YOUR_TOKEN' на токен, который вы получили от @BotFather
     application = Application.builder().token(BOT_TOKEN).build()
+
+    # Помещаем card_manager в bot_data, чтобы он был доступен в обработчиках
+    application.bot_data['card_manager'] = card_manager
 
     # Регистрируем обработчики команд
     application.add_handler(CommandHandler("start", send_start))
