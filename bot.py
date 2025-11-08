@@ -1,6 +1,8 @@
+import json
 import logging
 from random import choice
 from dataclasses import dataclass
+from pathlib import Path
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
@@ -18,41 +20,65 @@ class CrocodileCard:
     movie: str
     phrase: str
 
-# Встроенный список карточек
-# Можно легко заменить на чтение из JSON файла в будущем
-CARDS = [
-    CrocodileCard(word="Снегопад", movie="Терминатор", phrase="Белка под водой"),
-    CrocodileCard(word="Чистый пол", movie="Штрафной удар", phrase="Волынка пьёт виски со льдом"),
-    # Добавьте сюда больше карточек по образцу
-    CrocodileCard(word="Кот в сапогах", movie="Матрица", phrase="Собака играет на флейте"),
-    CrocodileCard(word="Горячий лёд", movie="Игра престолов", phrase="Лампочка боится темноты"),
-    CrocodileCard(word="Звонкий нос", movie="Аватар", phrase="Карандаш рисует в облаках"),
-    CrocodileCard(word="Сломанная радуга", movie="Форсаж", phrase="Чайник спит под столом"),
-    CrocodileCard(word="Танцующий чайник", movie="Скуби-Ду", phrase="Книга читает ученика"),
-    CrocodileCard(word="Прыгающий шкаф", movie="Холодное сердце", phrase="Микроволновка греет мороз"),
-    CrocodileCard(word="Плывущий вертолёт", movie="Рик и Морти", phrase="Носки вяжут свитер"),
-    CrocodileCard(word="Плачущий смех", movie="Смешарики", phrase="Тучка танцует под дождиком"),
-    # ... и так далее
-]
+# Путь к файлу с карточками
+CARDS_FILE_PATH = Path("cards.json")
+
+def load_cards_from_json(file_path: Path) -> list[CrocodileCard]:
+    """Загружает карточки из JSON-файла."""
+    try:
+        with file_path.open('r', encoding='utf-8') as f:
+            data = json.load(f)
+        # Преобразуем словари из JSON в экземпляры dataclass
+        cards = [CrocodileCard(**item) for item in data]
+        logger.info(f"Загружено {len(cards)} карточек из {file_path}")
+        return cards
+    except FileNotFoundError:
+        logger.error(f"Файл {file_path} не найден.")
+        return []
+    except json.JSONDecodeError as e:
+        logger.error(f"Ошибка чтения JSON из {file_path}: {e}")
+        return []
+    except TypeError as e:
+        logger.error(f"Ошибка структуры данных в {file_path}: {e}")
+        return []
+
+# Загружаем карточки при запуске скрипта
+CARDS = load_cards_from_json(CARDS_FILE_PATH)
 
 async def send_card(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Отправляет полную карточку."""
+    if not CARDS:
+        await update.message.reply_text("Карточки не загружены или файл пуст.")
+        return
+
     card = choice(CARDS)
     message = f"1) {card.word}\n2) {card.movie}\n3) {card.phrase}"
     await update.message.reply_text(message)
 
 async def send_word(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Отправляет только слово/фразу."""
+    if not CARDS:
+        await update.message.reply_text("Карточки не загружены или файл пуст.")
+        return
+
     card = choice(CARDS)
     await update.message.reply_text(f"{card.word}")
 
 async def send_movie(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Отправляет только фильм/сериал."""
+    if not CARDS:
+        await update.message.reply_text("Карточки не загружены или файл пуст.")
+        return
+
     card = choice(CARDS)
     await update.message.reply_text(f"{card.movie}")
 
 async def send_phrase(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Отправляет только алогичную фразу."""
+    if not CARDS:
+        await update.message.reply_text("Карточки не загружены или файл пуст.")
+        return
+
     card = choice(CARDS)
     await update.message.reply_text(f"{card.phrase}")
 
