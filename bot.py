@@ -46,6 +46,28 @@ def load_cards_from_json(file_path: Path) -> list[CrocodileCard]:
 # Загружаем карточки при запуске скрипта
 CARDS = load_cards_from_json(CARDS_FILE_PATH)
 
+async def send_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Отправляет приветственное сообщение при команде /start."""
+    welcome_message = (
+        "Привет! 👋\n"
+        "Я бот для игры в Крокодила 🦎\n\n"
+        "Используй команды ниже, чтобы получить карточку или её часть."
+    )
+    await update.message.reply_text(welcome_message)
+
+async def send_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Отправляет сообщение с описанием команд при команде /help."""
+    help_text = (
+        "📖 Справка по командам:\n\n"
+        "/start - Приветственное сообщение\n"
+        "/help - Это сообщение\n"
+        "/card - Получить полную карточку (слово, фильм, фраза)\n"
+        "/word - Получить только слово/фразу\n"
+        "/movie - Получить только название фильма/сериала\n"
+        "/phrase - Получить только алогичную фразу"
+    )
+    await update.message.reply_text(help_text)
+
 async def send_card(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Отправляет полную карточку."""
     if not CARDS:
@@ -89,6 +111,8 @@ def main() -> None:
     application = Application.builder().token(BOT_TOKEN).build()
 
     # Регистрируем обработчики команд
+    application.add_handler(CommandHandler("start", send_start))
+    application.add_handler(CommandHandler("help", send_help))
     application.add_handler(CommandHandler("card", send_card))
     application.add_handler(CommandHandler("word", send_word))
     application.add_handler(CommandHandler("movie", send_movie))
