@@ -41,11 +41,3 @@ class CardManager:
         if not self.cards:
             return None
         return choice(self.cards)
-
-    # Дополнительный метод, если нужен доступ ко всем частям за раз
-    # def get_random_card_parts(self) -> tuple[str, str, str] | None:
-    #     """Возвращает кортеж (word, movie, phrase) случайной карточки или None."""
-    #     card = self.get_random_card()
-    #     if card:
-    #         return card.word, card.movie, card.phrase
-    #     return None

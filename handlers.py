@@ -1,20 +1,31 @@
 # handlers.py
-from telegram import Update
-from telegram.ext import ContextTypes
-from cards import CardManager, CrocodileCard # Импортируем только классы
+import logging
+from aiogram import Router, F
+from aiogram.types import Message
+from aiogram.filters import Command
+from cards import CardManager, CrocodileCard
+from config import CARDS_FILE_PATH
 
-# Убираем глобальную переменную card_manager: CardManager
+# Создаём роутер для обработчиков
+router = Router()
 
-async def send_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+# Инициализируем card_manager в этом модуле
+card_manager = CardManager(CARDS_FILE_PATH)
+
+logger = logging.getLogger(__name__)
+
+@router.message(Command("start"))
+async def send_start(message: Message):
     """Отправляет приветственное сообщение при команде /start."""
     welcome_message = (
         "Привет! 👋\n"
         "Я бот для игры в Крокодила 🦎\n\n"
         "Используй команды ниже, чтобы получить карточку или её часть."
     )
-    await update.message.reply_text(welcome_message)
+    await message.answer(welcome_message)
 
-async def send_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+@router.message(Command("help"))
+async def send_help(message: Message):
     """Отправляет сообщение с описанием команд при команде /help."""
     help_text = (
         "📖 Справка по командам:\n\n"
@@ -23,69 +34,52 @@ async def send_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "/card - Получить полную карточку (слово, фильм, фраза)\n"
         "/word - Получить только слово/фразу\n"
         "/movie - Получить только название фильма/сериала\n"
-        "/phrase - Получить только алогичную фразу"
+        "/phrase - Получить только алогичную фразу\n"
+        "/reload_cards - Обновить карточки из файла"
     )
-    await update.message.reply_text(help_text)
+    await message.answer(help_text)
 
-async def send_card(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+@router.message(Command("card"))
+async def send_card(message: Message):
     """Отправляет полную карточку."""
-    # Получаем card_manager из bot_data
-    card_manager: CardManager = context.application.bot_data.get('card_manager')
-    if not card_manager:
-        # Это может произойти, если bot_data не был инициализирован
-        logger.error("card_manager не найден в bot_data!")
-        await update.message.reply_text("Ошибка: внутренняя ошибка бота.")
-        return
-
     card: CrocodileCard | None = card_manager.get_random_card()
     if not card:
-        await update.message.reply_text("Карточки не загружены или файл пуст.")
+        await message.answer("Карточки не загружены или файл пуст.")
         return
 
-    message = f"1) {card.word}\n2) {card.movie}\n3) {card.phrase}"
-    await update.message.reply_text(message)
+    message_text = f"1) {card.word}\n2) {card.movie}\n3) {card.phrase}"
+    await message.answer(message_text)
 
-async def send_word(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+@router.message(Command("word"))
+async def send_word(message: Message):
     """Отправляет только слово/фразу."""
-    # Получаем card_manager из bot_data
-    card_manager: CardManager = context.application.bot_data.get('card_manager')
-    if not card_manager:
-        logger.error("card_manager не найден в bot_data!")
-        await update.message.reply_text("Ошибка: внутренняя ошибка бота.")
-        return
-
     card: CrocodileCard | None = card_manager.get_random_card()
     if not card:
-        await update.message.reply_text("Карточки не загружены или файл пуст.")
+        await message.answer("Карточки не загружены или файл пуст.")
         return
-    await update.message.reply_text(f"{card.word}")
+    await message.answer(f"{card.word}")
 
-async def send_movie(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+@router.message(Command("movie"))
+async def send_movie(message: Message):
     """Отправляет только фильм/сериал."""
-    # Получаем card_manager из bot_data
-    card_manager: CardManager = context.application.bot_data.get('card_manager')
-    if not card_manager:
-        logger.error("card_manager не найден в bot_data!")
-        await update.message.reply_text("Ошибка: внутренняя ошибка бота.")
-        return
-
     card: CrocodileCard | None = card_manager.get_random_card()
     if not card:
-        await update.message.reply_text("Карточки не загружены или файл пуст.")
+        await message.answer("Карточки не загружены или файл пуст.")
         return
-    await update.message.reply_text(f"{card.movie}")
+    await message.answer(f"{card.movie}")
 
-async def send_phrase(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+@router.message(Command("phrase"))
+async def send_phrase(message: Message):
     """Отправляет только алогичную фразу."""
-    # Получаем card_manager из bot_data
-    card_manager: CardManager = context.application.bot_data.get('card_manager')
-    if not card_manager:
-        logger.error("card_manager не найден в bot_data!")
-        await update.message.reply_text("Ошибка: внутренняя ошибка бота.")
-        return
-
     card: CrocodileCard | None = card_manager.get_random_card()
     if not card:
-        await update.message.reply_text("Карточки не загружены или файл пуст.")
+        await message.answer("Карточки не загружены или файл пуст.")
         return
-    await update.message.reply_text(f"{card.phrase}")
+    await message.answer(f"{card.phrase}")
+
+@router.message(Command("reload_cards"))
+async def send_reload_cards(message: Message):
+    """Обработчик команды /reload_cards."""
+    logger.info(f"Получена команда /reload_cards от {message.from_user.id}")
+    card_manager._load_cards()
+    await message.answer("Карточки обновлены из файла.")
