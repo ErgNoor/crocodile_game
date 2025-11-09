@@ -33,11 +33,11 @@ async def send_start(message: Message):
     welcome_message = (
         "Привет! 👋\n"
         "Я бот для игры в Крокодила 🦎\n\n"
-        "Используй команды или кнопки ниже, чтобы получить карточку или её часть."
-        "Карточки построены по принципу: "
-        "1) Слово или фраза (1 или 2 слова)"
-        "2) Название фильма/мультфильма/сериала/мультсериала"
-        "3) Небольшая алогичная фраза из не связанных между собой слов (максимум - 6 слов)"
+        "Используй команды или кнопки ниже, чтобы получить карточку или её часть.\n\n"
+        "Карточки построены по принципу: \n\n"
+        "1) Слово или фраза (1 или 2 слова)\n"
+        "2) Название фильма/мультфильма/сериала/мультсериала\n"
+        "3) Небольшая алогичная фраза из не связанных между собой слов (максимум - 6 слов)\n"
     )
     keyboard = get_main_keyboard()
     await message.answer(welcome_message, reply_markup=keyboard)
@@ -110,7 +110,13 @@ async def send_reload_cards(message: Message):
 
 # --- НОВОЕ: Обработчик нажатия кнопок ---
 # F.text.in_ проверяет, совпадает ли текст сообщения с одним из указанных
-@router.message(F.text.in_(['/card', '/word', '/movie', '/phrase', '/help', '/reload_cards']))
+@router.message(F.text.in_([
+    'Карточка', 
+    'Слово', 
+    'Фильм/мультфильм(сериал)', 
+    'Фраза', 
+    'Помощь',
+]))
 async def handle_button_click(message: Message):
     """
     Обрабатывает нажатие кнопок, которые отправляют команды.
@@ -123,7 +129,7 @@ async def handle_button_click(message: Message):
     user_text = message.text
     logger.info(f"Получено текстовое сообщение от кнопки: '{user_text}' от {message.from_user.id}")
 
-    if user_text == '/card':
+    if user_text == 'Карточка':
         card: CrocodileCard | None = card_manager.get_random_card()
         if not card:
             await message.answer("Карточки не загружены или файл пуст.")
@@ -131,28 +137,28 @@ async def handle_button_click(message: Message):
         message_text = f"1) {card.word}\n2) {card.movie}\n3) {card.phrase}"
         keyboard = get_main_keyboard()
         await message.answer(message_text, reply_markup=keyboard)
-    elif user_text == '/word':
+    elif user_text == 'Слово':
         card: CrocodileCard | None = card_manager.get_random_card()
         if not card:
             await message.answer("Карточки не загружены или файл пуст.")
             return
         keyboard = get_main_keyboard()
         await message.answer(f"{card.word}", reply_markup=keyboard)
-    elif user_text == '/movie':
+    elif user_text == 'Фильм/мультфильм(сериал)':
         card: CrocodileCard | None = card_manager.get_random_card()
         if not card:
             await message.answer("Карточки не загружены или файл пуст.")
             return
         keyboard = get_main_keyboard()
         await message.answer(f"{card.movie}", reply_markup=keyboard)
-    elif user_text == '/phrase':
+    elif user_text == 'Фраза':
         card: CrocodileCard | None = card_manager.get_random_card()
         if not card:
             await message.answer("Карточки не загружены или файл пуст.")
             return
         keyboard = get_main_keyboard()
         await message.answer(f"{card.phrase}", reply_markup=keyboard)
-    elif user_text == '/help':
+    elif user_text == 'Помощь':
         help_text = (
             "📖 Справка по командам:\n\n"
             "/start - Приветственное сообщение\n"
