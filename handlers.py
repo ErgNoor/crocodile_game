@@ -18,9 +18,9 @@ logger = logging.getLogger(__name__)
 def get_main_keyboard():
     keyboard = ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="/card"), KeyboardButton(text="/word")],
-            [KeyboardButton(text="/movie"), KeyboardButton(text="/phrase")],
-            [KeyboardButton(text="/help"), KeyboardButton(text="/reload_cards")],
+            [KeyboardButton(text="Карточка"), KeyboardButton(text="Слово")],
+            [KeyboardButton(text="Фильм/мультфильм(сериал)"), KeyboardButton(text="Фраза")],
+            [KeyboardButton(text="Помощь")],
         ],
         resize_keyboard=True,
         one_time_keyboard=False # Клавиатура не исчезает после нажатия
