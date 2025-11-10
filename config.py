@@ -13,7 +13,10 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 if not BOT_TOKEN:
     raise ValueError("BOT_TOKEN environment variable not set.")
 
-CARDS_FILE_PATH = Path(os.getenv("CARDS_FILE_PATH", "cards.json"))
+# Пути к файлам с данными
+WORDS_FILE_PATH = Path(os.getenv("WORDS_FILE_PATH", "words.json"))
+MOVIES_FILE_PATH = Path(os.getenv("MOVIES_FILE_PATH", "movies.json"))
+PHRASES_FILE_PATH = Path(os.getenv("PHRASES_FILE_PATH", "phrases.json"))
 
 # Создаём экземпляр Bot с DefaultBotProperties
 bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))

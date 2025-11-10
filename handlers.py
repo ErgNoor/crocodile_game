@@ -3,24 +3,24 @@ import logging
 from aiogram import Router, F
 from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton
 from aiogram.filters import Command
-from cards import CardManager, CrocodileCard
-from config import CARDS_FILE_PATH
+from cards import CardManager
+from config import WORDS_FILE_PATH, MOVIES_FILE_PATH, PHRASES_FILE_PATH
 
 # Создаём роутер для обработчиков
 router = Router()
 
-# Инициализируем card_manager в этом модуле
-card_manager = CardManager(CARDS_FILE_PATH)
+# Инициализируем card_manager в этом модуле с новыми путями
+card_manager = CardManager(WORDS_FILE_PATH, MOVIES_FILE_PATH, PHRASES_FILE_PATH)
 
 logger = logging.getLogger(__name__)
 
-# --- Создание клавиатуры ---
+# --- Создание клавиатуры (с русскими кнопками, без /reload_cards) ---
 def get_main_keyboard():
     keyboard = ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text="Карточка"), KeyboardButton(text="Слово")],
             [KeyboardButton(text="Фильм/мультфильм(сериал)"), KeyboardButton(text="Фраза")],
-            [KeyboardButton(text="Помощь")],
+            [KeyboardButton(text="Помощь")], # Убрана кнопка /reload_cards
         ],
         resize_keyboard=True,
         one_time_keyboard=False # Клавиатура не исчезает после нажатия
@@ -53,7 +53,7 @@ async def send_help(message: Message):
         "/word - Получить только слово/фразу\n"
         "/movie - Получить только название фильма/сериала\n"
         "/phrase - Получить только алогичную фразу\n"
-        "/reload_cards - Обновить карточки из файла"
+        "/reload_cards - Обновить карточки из файла (доступна только по команде)"
     )
     keyboard = get_main_keyboard()
     await message.answer(help_text, reply_markup=keyboard)
@@ -61,103 +61,106 @@ async def send_help(message: Message):
 @router.message(Command("card"))
 async def send_card(message: Message):
     """Отправляет полную карточку."""
-    card: CrocodileCard | None = card_manager.get_random_card()
-    if not card:
-        await message.answer("Карточки не загружены или файл пуст.")
+    card_parts = card_manager.get_random_card_parts()
+    if not card_parts:
+        await message.answer("Карточки не загружены или файлы пусты.")
         return
 
-    message_text = f"1) {card.word}\n2) {card.movie}\n3) {card.phrase}"
+    word, movie, phrase = card_parts
+    message_text = f"1) {word}\n2) {movie}\n3) {phrase}"
     keyboard = get_main_keyboard()
     await message.answer(message_text, reply_markup=keyboard)
 
 @router.message(Command("word"))
 async def send_word(message: Message):
     """Отправляет только слово/фразу."""
-    card: CrocodileCard | None = card_manager.get_random_card()
-    if not card:
-        await message.answer("Карточки не загружены или файл пуст.")
+    card_parts = card_manager.get_random_card_parts()
+    if not card_parts:
+        await message.answer("Карточки не загружены или файлы пусты.")
         return
+    word, _, _ = card_parts
     keyboard = get_main_keyboard()
-    await message.answer(f"{card.word}", reply_markup=keyboard)
+    await message.answer(f"{word}", reply_markup=keyboard)
 
 @router.message(Command("movie"))
 async def send_movie(message: Message):
     """Отправляет только фильм/сериал."""
-    card: CrocodileCard | None = card_manager.get_random_card()
-    if not card:
-        await message.answer("Карточки не загружены или файл пуст.")
+    card_parts = card_manager.get_random_card_parts()
+    if not card_parts:
+        await message.answer("Карточки не загружены или файлы пусты.")
         return
+    _, movie, _ = card_parts
     keyboard = get_main_keyboard()
-    await message.answer(f"{card.movie}", reply_markup=keyboard)
+    await message.answer(f"{movie}", reply_markup=keyboard)
 
 @router.message(Command("phrase"))
 async def send_phrase(message: Message):
     """Отправляет только алогичную фразу."""
-    card: CrocodileCard | None = card_manager.get_random_card()
-    if not card:
-        await message.answer("Карточки не загружены или файл пуст.")
+    card_parts = card_manager.get_random_card_parts()
+    if not card_parts:
+        await message.answer("Карточки не загружены или файлы пусты.")
         return
+    _, _, phrase = card_parts
     keyboard = get_main_keyboard()
-    await message.answer(f"{card.phrase}", reply_markup=keyboard)
+    await message.answer(f"{phrase}", reply_markup=keyboard)
 
 @router.message(Command("reload_cards"))
 async def send_reload_cards(message: Message):
     """Обработчик команды /reload_cards."""
     logger.info(f"Получена команда /reload_cards от {message.from_user.id}")
-    card_manager._load_cards()
-    keyboard = get_main_keyboard()
-    await message.answer("Карточки обновлены из файла.", reply_markup=keyboard)
+    card_manager.reload_data()
+    # Отправляем сообщение без клавиатуры, чтобы не добавлять кнопку снова
+    await message.answer("Карточки обновлены из файлов.")
 
-# --- НОВОЕ: Обработчик нажатия кнопок ---
+# --- Обработчик нажатия кнопок (с русскими текстами, без /reload_cards) ---
 # F.text.in_ проверяет, совпадает ли текст сообщения с одним из указанных
 @router.message(F.text.in_([
-    'Карточка', 
-    'Слово', 
-    'Фильм/мультфильм(сериал)', 
-    'Фраза', 
+    'Карточка',
+    'Слово',
+    'Фильм/мультфильм(сериал)',
+    'Фраза',
     'Помощь',
 ]))
 async def handle_button_click(message: Message):
     """
     Обрабатывает нажатие кнопок, которые отправляют команды.
     """
-    # Так как кнопки отправляют команды, мы можем просто вызвать соответствующую логику
-    # или переадресовать к основному обработчику команд.
-    # В aiogram удобно использовать подстановку сообщения.
-    # Однако, для простоты, мы можем вызвать нужную функцию напрямую.
-
     user_text = message.text
     logger.info(f"Получено текстовое сообщение от кнопки: '{user_text}' от {message.from_user.id}")
 
     if user_text == 'Карточка':
-        card: CrocodileCard | None = card_manager.get_random_card()
-        if not card:
-            await message.answer("Карточки не загружены или файл пуст.")
+        card_parts = card_manager.get_random_card_parts()
+        if not card_parts:
+            await message.answer("Карточки не загружены или файлы пусты.")
             return
-        message_text = f"1) {card.word}\n2) {card.movie}\n3) {card.phrase}"
+        word, movie, phrase = card_parts
+        message_text = f"1) {word}\n2) {movie}\n3) {phrase}"
         keyboard = get_main_keyboard()
         await message.answer(message_text, reply_markup=keyboard)
     elif user_text == 'Слово':
-        card: CrocodileCard | None = card_manager.get_random_card()
-        if not card:
-            await message.answer("Карточки не загружены или файл пуст.")
+        card_parts = card_manager.get_random_card_parts()
+        if not card_parts:
+            await message.answer("Карточки не загружены или файлы пусты.")
             return
+        word, _, _ = card_parts
         keyboard = get_main_keyboard()
-        await message.answer(f"{card.word}", reply_markup=keyboard)
+        await message.answer(f"{word}", reply_markup=keyboard)
     elif user_text == 'Фильм/мультфильм(сериал)':
-        card: CrocodileCard | None = card_manager.get_random_card()
-        if not card:
-            await message.answer("Карточки не загружены или файл пуст.")
+        card_parts = card_manager.get_random_card_parts()
+        if not card_parts:
+            await message.answer("Карточки не загружены или файлы пусты.")
             return
+        _, movie, _ = card_parts
         keyboard = get_main_keyboard()
-        await message.answer(f"{card.movie}", reply_markup=keyboard)
+        await message.answer(f"{movie}", reply_markup=keyboard)
     elif user_text == 'Фраза':
-        card: CrocodileCard | None = card_manager.get_random_card()
-        if not card:
-            await message.answer("Карточки не загружены или файл пуст.")
+        card_parts = card_manager.get_random_card_parts()
+        if not card_parts:
+            await message.answer("Карточки не загружены или файлы пусты.")
             return
+        _, _, phrase = card_parts
         keyboard = get_main_keyboard()
-        await message.answer(f"{card.phrase}", reply_markup=keyboard)
+        await message.answer(f"{phrase}", reply_markup=keyboard)
     elif user_text == 'Помощь':
         help_text = (
             "📖 Справка по командам:\n\n"
@@ -167,12 +170,8 @@ async def handle_button_click(message: Message):
             "/word - Получить только слово/фразу\n"
             "/movie - Получить только название фильма/сериала\n"
             "/phrase - Получить только алогичную фразу\n"
-            "/reload_cards - Обновить карточки из файла"
+            "/reload_cards - Обновить карточки из файла (доступна только по команде)"
         )
         keyboard = get_main_keyboard()
         await message.answer(help_text, reply_markup=keyboard)
-    elif user_text == '/reload_cards':
-        logger.info(f"Получена команда /reload_cards от {message.from_user.id}")
-        card_manager._load_cards()
-        keyboard = get_main_keyboard()
-        await message.answer("Карточки обновлены из файла.", reply_markup=keyboard)
+    # else: можно добавить обработку неизвестных кнопок, если нужно
