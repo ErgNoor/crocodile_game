@@ -30,10 +30,6 @@ def get_main_keyboard():
 @router.message(Command("start"))
 async def send_start(message: Message):
     """Отправляет приветственное сообщение при команде /start."""
-    user_id = message.from_user.id
-    username = message.from_user.username or "N/A"
-    logger.info(f"Пользователь {username} (ID: {user_id}) отправил команду /start.")
-    
     welcome_message = (
         "Привет! 👋\n"
         "Я бот для игры в Крокодила 🦎\n\n"
@@ -49,10 +45,6 @@ async def send_start(message: Message):
 @router.message(Command("help"))
 async def send_help(message: Message):
     """Отправляет сообщение с описанием команд при команде /help."""
-    user_id = message.from_user.id
-    username = message.from_user.username or "N/A"
-    logger.info(f"Пользователь {username} (ID: {user_id}) отправил команду /help.")
-    
     help_text = (
         "📖 Справка по командам:\n\n"
         "/start - Приветственное сообщение\n"
@@ -69,10 +61,6 @@ async def send_help(message: Message):
 @router.message(Command("card"))
 async def send_card(message: Message):
     """Отправляет полную карточку."""
-    user_id = message.from_user.id
-    username = message.from_user.username or "N/A"
-    logger.info(f"Пользователь {username} (ID: {user_id}) отправил команду /card.")
-    
     card_parts = card_manager.get_random_card_parts()
     if not card_parts:
         await message.answer("Карточки не загружены или файлы пусты.")
@@ -85,10 +73,6 @@ async def send_card(message: Message):
 @router.message(Command("word"))
 async def send_word(message: Message):
     """Отправляет только слово/фразу."""
-    user_id = message.from_user.id
-    username = message.from_user.username or "N/A"
-    logger.info(f"Пользователь {username} (ID: {user_id}) отправил команду /word.")
-    
     card_parts = card_manager.get_random_card_parts()
     if not card_parts:
         await message.answer("Карточки не загружены или файлы пусты.")
@@ -100,10 +84,6 @@ async def send_word(message: Message):
 @router.message(Command("movie"))
 async def send_movie(message: Message):
     """Отправляет только фильм/сериал."""
-    user_id = message.from_user.id
-    username = message.from_user.username or "N/A"
-    logger.info(f"Пользователь {username} (ID: {user_id}) отправил команду /movie.")
-    
     card_parts = card_manager.get_random_card_parts()
     if not card_parts:
         await message.answer("Карточки не загружены или файлы пусты.")
@@ -115,10 +95,6 @@ async def send_movie(message: Message):
 @router.message(Command("phrase"))
 async def send_phrase(message: Message):
     """Отправляет только алогичную фразу."""
-    user_id = message.from_user.id
-    username = message.from_user.username or "N/A"
-    logger.info(f"Пользователь {username} (ID: {user_id}) отправил команду /phrase.")
-    
     card_parts = card_manager.get_random_card_parts()
     if not card_parts:
         await message.answer("Карточки не загружены или файлы пусты.")
@@ -130,10 +106,6 @@ async def send_phrase(message: Message):
 @router.message(Command("reload_cards"))
 async def send_reload_cards(message: Message):
     """Обработчик команды /reload_cards."""
-    user_id = message.from_user.id
-    username = message.from_user.username or "N/A"
-    logger.info(f"Пользователь {username} (ID: {user_id}) отправил команду /reload_cards.")
-    
     card_manager.reload_data()
     # Отправляем сообщение без клавиатуры, чтобы не добавлять кнопку снова
     await message.answer("Карточки обновлены из файлов.")
@@ -151,11 +123,7 @@ async def handle_button_click(message: Message):
     """
     Обрабатывает нажатие кнопок, которые отправляют команды.
     """
-    user_id = message.from_user.id
-    username = message.from_user.username or "N/A"
     user_text = message.text
-    logger.info(f"Пользователь {username} (ID: {user_id}) нажал кнопку: '{user_text}'")
-    
     # Используем match/case для сопоставления текста кнопки
     match user_text:
         case 'Карточка':

@@ -6,11 +6,15 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from config import bot, dp # Импортируем bot и dp из config
 from handlers import router # Импортируем роутер из handlers
+from middlewares import LoggingMiddleware # Импортируем middleware
 
 # Включаем логирование
 logging.basicConfig(level=logging.INFO)
 
 async def main():
+    # Регистрируем middleware в диспетчере
+    dp.message.middleware(LoggingMiddleware())
+    
     # Включаем роутер в диспетчер
     dp.include_router(router)
 
