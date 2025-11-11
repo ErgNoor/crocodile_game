@@ -5,6 +5,8 @@ from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton
 from aiogram.filters import Command
 from cards import CardManager
 from config import WORDS_FILE_PATH, MOVIES_FILE_PATH, PHRASES_FILE_PATH
+from text_loader import load_text_from_file
+from pathlib import Path
 
 # Создаём роутер для обработчиков
 router = Router()
@@ -13,6 +15,10 @@ router = Router()
 card_manager = CardManager(WORDS_FILE_PATH, MOVIES_FILE_PATH, PHRASES_FILE_PATH)
 
 logger = logging.getLogger(__name__)
+
+# --- Пути к файлам с текстами ---
+WELCOME_MESSAGE_PATH = Path("resources/welcome_message.txt")
+HELP_MESSAGE_PATH = Path("resources/help_message.txt")
 
 # --- Создание клавиатуры (с русскими кнопками, без /reload_cards) ---
 def get_main_keyboard():
@@ -30,31 +36,14 @@ def get_main_keyboard():
 @router.message(Command("start"))
 async def send_start(message: Message):
     """Отправляет приветственное сообщение при команде /start."""
-    welcome_message = (
-        "Привет! 👋\n"
-        "Я бот для игры в Крокодила 🦎\n\n"
-        "Используй команды или кнопки ниже, чтобы получить карточку или её часть.\n\n"
-        "Карточки построены по принципу: \n\n"
-        "1) Слово или фраза (1 или 2 слова)\n"
-        "2) Название фильма/мультфильма/сериала/мультсериала\n"
-        "3) Небольшая алогичная фраза из не связанных между собой слов (максимум - 6 слов)\n"
-    )
+    welcome_message = load_text_from_file(WELCOME_MESSAGE_PATH)
     keyboard = get_main_keyboard()
     await message.answer(welcome_message, reply_markup=keyboard)
 
 @router.message(Command("help"))
 async def send_help(message: Message):
     """Отправляет сообщение с описанием команд при команде /help."""
-    help_text = (
-        "📖 Справка по командам:\n\n"
-        "/start - Приветственное сообщение\n"
-        "/help - Это сообщение\n"
-        "/card - Получить полную карточку (слово, фильм, фраза)\n"
-        "/word - Получить только слово/фразу\n"
-        "/movie - Получить только название фильма/сериала\n"
-        "/phrase - Получить только алогичную фразу\n"
-        "/reload_cards - Обновить карточки из файла (доступна только по команде)"
-    )
+    help_text = load_text_from_file(HELP_MESSAGE_PATH)
     keyboard = get_main_keyboard()
     await message.answer(help_text, reply_markup=keyboard)
 
@@ -160,16 +149,7 @@ async def handle_button_click(message: Message):
                 keyboard = get_main_keyboard()
                 await message.answer(f"{phrase}", reply_markup=keyboard)
         case 'Помощь':
-            help_text = (
-                "📖 Справка по командам:\n\n"
-                "/start - Приветственное сообщение\n"
-                "/help - Это сообщение\n"
-                "/card - Получить полную карточку (слово, фильм, фраза)\n"
-                "/word - Получить только слово/фразу\n"
-                "/movie - Получить только название фильма/сериала\n"
-                "/phrase - Получить только алогичную фразу\n"
-                "/reload_cards - Обновить карточки из файла (доступна только по команде)"
-            )
+            help_text = load_text_from_file(HELP_MESSAGE_PATH)
             keyboard = get_main_keyboard()
             await message.answer(help_text, reply_markup=keyboard)
         # else: можно добавить case _ для обработки неизвестных кнопок, если нужно
