@@ -64,12 +64,11 @@ async def send_card(message: Message):
     card_parts = card_manager.get_random_card_parts()
     if not card_parts:
         await message.answer("Карточки не загружены или файлы пусты.")
-
-    word, movie, phrase = card_parts
-    message_text = f"1) {word}\n2) {movie}\n3) {phrase}"
-    keyboard = get_main_keyboard()
-    await message.answer(message_text, reply_markup=keyboard)
-    # return <-- Убран из конца функции
+    else:
+        word, movie, phrase = card_parts
+        message_text = f"1) {word}\n2) {movie}\n3) {phrase}"
+        keyboard = get_main_keyboard()
+        await message.answer(message_text, reply_markup=keyboard)
 
 @router.message(Command("word"))
 async def send_word(message: Message):
@@ -77,10 +76,10 @@ async def send_word(message: Message):
     card_parts = card_manager.get_random_card_parts()
     if not card_parts:
         await message.answer("Карточки не загружены или файлы пусты.")
-    word, _, _ = card_parts
-    keyboard = get_main_keyboard()
-    await message.answer(f"{word}", reply_markup=keyboard)
-    # return <-- Убран из конца функции
+    else:
+        word, _, _ = card_parts
+        keyboard = get_main_keyboard()
+        await message.answer(f"{word}", reply_markup=keyboard)
 
 @router.message(Command("movie"))
 async def send_movie(message: Message):
@@ -88,10 +87,10 @@ async def send_movie(message: Message):
     card_parts = card_manager.get_random_card_parts()
     if not card_parts:
         await message.answer("Карточки не загружены или файлы пусты.")
-    _, movie, _ = card_parts
-    keyboard = get_main_keyboard()
-    await message.answer(f"{movie}", reply_markup=keyboard)
-    # return <-- Убран из конца функции
+    else:
+        _, movie, _ = card_parts
+        keyboard = get_main_keyboard()
+        await message.answer(f"{movie}", reply_markup=keyboard)
 
 @router.message(Command("phrase"))
 async def send_phrase(message: Message):
@@ -99,10 +98,10 @@ async def send_phrase(message: Message):
     card_parts = card_manager.get_random_card_parts()
     if not card_parts:
         await message.answer("Карточки не загружены или файлы пусты.")
-    _, _, phrase = card_parts
-    keyboard = get_main_keyboard()
-    await message.answer(f"{phrase}", reply_markup=keyboard)
-    # return <-- Убран из конца функции
+    else:
+        _, _, phrase = card_parts
+        keyboard = get_main_keyboard()
+        await message.answer(f"{phrase}", reply_markup=keyboard)
 
 @router.message(Command("reload_cards"))
 async def send_reload_cards(message: Message):
@@ -111,7 +110,6 @@ async def send_reload_cards(message: Message):
     card_manager.reload_data()
     # Отправляем сообщение без клавиатуры, чтобы не добавлять кнопку снова
     await message.answer("Карточки обновлены из файлов.")
-    # return <-- Убран из конца функции
 
 # --- Обработчик нажатия кнопок (с русскими текстами, без /reload_cards) ---
 # F.text.in_ проверяет, совпадает ли текст сообщения с одним из указанных
@@ -135,35 +133,35 @@ async def handle_button_click(message: Message):
             card_parts = card_manager.get_random_card_parts()
             if not card_parts:
                 await message.answer("Карточки не загружены или файлы пусты.")
-            word, movie, phrase = card_parts
-            message_text = f"1) {word}\n2) {movie}\n3) {phrase}"
-            keyboard = get_main_keyboard()
-            await message.answer(message_text, reply_markup=keyboard)
-            # return <-- Убран из конца case
+            else:
+                word, movie, phrase = card_parts
+                message_text = f"1) {word}\n2) {movie}\n3) {phrase}"
+                keyboard = get_main_keyboard()
+                await message.answer(message_text, reply_markup=keyboard)
         case 'Слово':
             card_parts = card_manager.get_random_card_parts()
             if not card_parts:
                 await message.answer("Карточки не загружены или файлы пусты.")
-            word, _, _ = card_parts
-            keyboard = get_main_keyboard()
-            await message.answer(f"{word}", reply_markup=keyboard)
-            # return <-- Убран из конца case
+            else:
+                word, _, _ = card_parts
+                keyboard = get_main_keyboard()
+                await message.answer(f"{word}", reply_markup=keyboard)
         case 'Фильм/мультфильм(сериал)':
             card_parts = card_manager.get_random_card_parts()
             if not card_parts:
                 await message.answer("Карточки не загружены или файлы пусты.")
-            _, movie, _ = card_parts
-            keyboard = get_main_keyboard()
-            await message.answer(f"{movie}", reply_markup=keyboard)
-            # return <-- Убран из конца case
+            else:
+                _, movie, _ = card_parts
+                keyboard = get_main_keyboard()
+                await message.answer(f"{movie}", reply_markup=keyboard)
         case 'Фраза':
             card_parts = card_manager.get_random_card_parts()
             if not card_parts:
                 await message.answer("Карточки не загружены или файлы пусты.")
-            _, _, phrase = card_parts
-            keyboard = get_main_keyboard()
-            await message.answer(f"{phrase}", reply_markup=keyboard)
-            # return <-- Убран из конца case
+            else:
+                _, _, phrase = card_parts
+                keyboard = get_main_keyboard()
+                await message.answer(f"{phrase}", reply_markup=keyboard)
         case 'Помощь':
             help_text = (
                 "📖 Справка по командам:\n\n"
@@ -177,7 +175,6 @@ async def handle_button_click(message: Message):
             )
             keyboard = get_main_keyboard()
             await message.answer(help_text, reply_markup=keyboard)
-            # return <-- Убран из конца case
         # else: можно добавить case _ для обработки неизвестных кнопок, если нужно
         # case _:
         #     logger.warning(f"Получен неизвестный текст от кнопки: '{user_text}'")
